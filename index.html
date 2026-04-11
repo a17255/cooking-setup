@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cooking Setup 2026-04-06</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;600&display=swap");
+
+      :root {
+        --bg: #f2f0ea;
+        --ink: #1d1a16;
+        --muted: #6a6258;
+        --card: #fffaf1;
+        --accent: #b65f3a;
+        --accent-2: #2f6f64;
+        --ring: rgba(182, 95, 58, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top left, #efe6d8, transparent 45%),
+                    radial-gradient(circle at bottom right, #e6f1ee, transparent 50%),
+                    var(--bg);
+      }
+
+      .page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+      }
+
+      .card {
+        width: min(980px, 100%);
+        background: var(--card);
+        border-radius: 24px;
+        box-shadow: 0 24px 60px rgba(38, 30, 20, 0.18);
+        padding: 40px;
+        border: 1px solid rgba(90, 74, 58, 0.08);
+      }
+
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+
+      h1 {
+        font-family: "Fraunces", serif;
+        font-size: clamp(28px, 4vw, 44px);
+        margin: 0 0 18px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .special-note {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .people-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 14px;
+      }
+
+      .people-row label {
+        font-size: 13px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+      }
+
+      .people-row select {
+        padding: 6px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(90, 74, 58, 0.2);
+        background: #fff;
+        font-size: 14px;
+      }
+
+      .action-row {
+        margin-top: 16px;
+        display: flex;
+        gap: 12px;
+      }
+
+      .action-btn {
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 18px;
+        margin: 28px 0 8px;
+      }
+
+      .item {
+        padding: 18px 20px;
+        border-radius: 18px;
+        background: #fff7e8;
+        border: 1px solid rgba(182, 95, 58, 0.08);
+        box-shadow: 0 10px 20px var(--ring);
+      }
+
+      .item h2 {
+        margin: 0 0 8px;
+        font-size: 14px;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+      }
+
+      .item p {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+
+      .market {
+        margin-top: 26px;
+        padding: 20px;
+        border-radius: 18px;
+        background: #f7efe2;
+        border: 1px solid rgba(47, 111, 100, 0.18);
+      }
+
+      .market h3 {
+        margin: 0 0 16px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: var(--accent-2);
+      }
+
+      .market-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+      }
+
+      .dish-section {
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid rgba(90, 74, 58, 0.06);
+      }
+
+      .dish-section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(90, 74, 58, 0.1);
+      }
+
+      .dish-tag {
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        padding: 2px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+      }
+
+      .dish-tag-main { background: rgba(182, 95, 58, 0.15); color: var(--accent); }
+      .dish-tag-side { background: rgba(47, 111, 100, 0.15); color: var(--accent-2); }
+      .dish-tag-soup { background: rgba(90, 74, 58, 0.12); color: var(--muted); }
+
+      .dish-section-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+      }
+
+      .ingredient-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .ingredient-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 13px;
+        padding: 3px 0;
+      }
+
+      .ingredient-name {
+        color: var(--ink);
+      }
+
+      .ingredient-qty {
+        font-weight: 600;
+        color: var(--accent);
+        white-space: nowrap;
+        margin-left: 12px;
+        text-align: right;
+        min-width: 60px;
+      }
+
+      .ingredient-seasoning {
+        font-size: 12px;
+        color: var(--muted);
+        font-style: italic;
+        padding-top: 4px;
+        border-top: 1px dashed rgba(90, 74, 58, 0.1);
+        margin-top: 4px;
+      }
+
+      .market-note {
+        grid-column: 1 / -1;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(182, 95, 58, 0.08);
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .foot {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px dashed rgba(120, 98, 78, 0.25);
+        font-size: 13px;
+        color: var(--muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .link {
+        color: var(--accent-2);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      @media (max-width: 600px) {
+        .card { padding: 28px; }
+        .item p { font-size: 17px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <main class="card">
+        <div class="eyebrow">Daily Cooking Setup</div>
+        <h1>Today’s Menu — 2026-04-06</h1>
+        <div class="meta">
+          <span>Generated at 15:01</span>
+          <span id="people-count">4 people</span>
+          <span>Rotation enabled</span>
+          <span class="special-note" id="special-note"></span>
+        </div>
+        <div class="people-row">
+          <label for="people-select">People</label>
+          <select id="people-select" data-default="4">
+            <option value='1'>1</option><option value='2'>2</option><option value='3'>3</option><option value='4' selected>4</option><option value='5'>5</option><option value='6'>6</option><option value='7'>7</option><option value='8'>8</option><option value='9'>9</option><option value='10'>10</option>
+          </select>
+        </div>
+        <div class="action-row">
+          <button class="action-btn" id="reroll-btn">Change suggestion</button>
+        </div>
+        <section class="grid">
+          <article class="item">
+            <h2>Main</h2>
+            <p id="meal-main">Cá ngừ kho thơm</p>
+          </article>
+          <article class="item">
+            <h2>Side</h2>
+            <p id="meal-side">Rau muong xao toi</p>
+          </article>
+          <article class="item">
+            <h2>Soup</h2>
+            <p id="meal-soup">cà rốt nấu tôm</p>
+          </article>
+        </section>
+        <section class="market">
+          <h3>Nguyen lieu</h3>
+          <div class="market-grid" id="market-list">
+            <div class='market-note'>Add 'Gradient/1person' in AllMeals for detailed market items.</div><div class='market-item'><span>Main dish</span><strong>Cá ngừ kho thơm</strong></div><div class='market-item'><span>Side dish</span><strong>Rau muong xao toi</strong></div><div class='market-item'><span>Soup</span><strong>cà rốt nấu tôm</strong></div><div class='market-item'><span>Protein (est)</span><strong>720 g</strong></div><div class='market-item'><span>Vegetables (est)</span><strong>1.0 kg</strong></div><div class='market-item'><span>Carbs (est)</span><strong>800 g</strong></div><div class='market-item'><span>Soup base (est)</span><strong>800 g</strong></div><div class='market-item'><span>Herbs (est)</span><strong>1 bundle</strong></div>
+          </div>
+        </section>
+        <div class="foot">
+          <span>Source: Google Sheet</span>
+          <a class="link" href="https://docs.google.com/spreadsheets/d/1HVpkODWTPLLlFDjQ_8g4i9DRxarNxhcL_U6qxG8uBdo/edit" target="_blank" rel="noreferrer">Open sheet</a>
+        </div>
+      </main>
+    </div>
+    <script>
+      const select = document.getElementById("people-select");
+      const marketList = document.getElementById("market-list");
+      const countLabel = document.getElementById("people-count");
+      const mealMain = document.getElementById("meal-main");
+      const mealSide = document.getElementById("meal-side");
+      const mealSoup = document.getElementById("meal-soup");
+      const specialNote = document.getElementById("special-note");
+      const rerollBtn = document.getElementById("reroll-btn");
+      const sheetId = "1HVpkODWTPLLlFDjQ_8g4i9DRxarNxhcL_U6qxG8uBdo";
+      const corsProxy = "https://r.jina.ai/http://";
+      const fallbackMeals = {"main": ["Bun bo Hue", "Pho bo", "Com suon nuong", "Thit kho trung", "Diêu hồng chiên sốt cà", "cá bóng đục kho tiêu", "Cá hố chiên", "cá chim/thu sốt cà chua", "cá nục kho măng", "Cá mó chiên", "Cá hồi nướng bơ tỏi", "Cá thu chiên", "Cá thu rim ớt", "Cá lóc kho tộ", "Cá thu chiên mắm tỏi", "Cá ngừ kho thơm", "Sườn non nấu đậu", "sườn non kho nấm rơm", "sườn non kho trứng cút", "sườn non kho ớt chuông", "ba chỉ kho đậu hủ", "ba chỉ kho tôm", "thịt kho trứng cút", "bò xào đậu ve+ trứng cuộn cà rốt", "bò xào hoa thiên lý", "Bò xào nấm rơm", "tôm xào bông cải/ bông bí non", "Tôm rim nước dừa", "mực xào chua ngọt", "bạch tuột xào chua ngọt", "Gà xào sả ớt.", "Gà kho gừng.", "Gà xốt chua ngọt tẩm mè", "Gà hấp nước mắm", "Gà hấp hành", "Gà kho măng", "Thịt ba chỉ quay giòn bì", "Nấm – đậu hũ kho", "Lươn xào lăn", "Lươn kho xả ớt", "ếch xào lăn", "ếch kho xả ơt", "Nấm - đậu hũ kho", "Gà xào sả ớt.", "Gà kho gừng.", "Gà xốt chua ngọt tẩm mè", "Gà hấp nước mắm", "Gà hấp hành", "Gà kho măng", "Thịt ba chỉ quay giòn bì"], "side": ["Rau muong xao toi", "Nom du du", "Mướp xào mề gà", "Bò xào thiên lý", "Lang luộc", "dền luộc", "muống luộc", "ngọn su su xào tỏi", "đậu bắp luộc", "rau muống luộc", "rau lang luộc", "Khoai tây xào thịt bò", "Đậu que xào thịt bò"], "soup": ["Canh chua ca", "Canh bi do", "Canh bí đỏ đuôi heo", "canh xà lách son thịt băm", "Canh bầu tôm băm", "canh khổ qua nhồi thịt/thác lác", "canh cúc thác lác", "canh rau đay nấu tôm", "rong biển thịt bò", "đầu cá hồi nấu ngót", "cá giò nấu chua", "Thịt băm bí đao", "Mướp + nấm+ thịt băm", "rau dền cá thác lác", "khổ qua cá thác lác", "cải cá thác lác", "cá khoai/thác lác rau cúc", "canh cá chẽm nấu ngót", "Canh cá khoai tần ô", "canh chua cá bớp", "cà rốt nấu tôm", "Khoai tím nấu tôm", "xà lách xoan nấu tôm", "Bầu nấu tôm", "Cải xoăn nấu tôm", "Khổ qua nhồi tôm thịt"]};
+      let allMeals = JSON.parse(JSON.stringify(fallbackMeals));
+      const gradientMap = {};
+      const marketMap = {};
+      const specialMains = new Set(["pho bo", "bun bo hue", "bun rieu", "mi quang", "banh canh gio heo"]);
+
+      function normalizeName(value) {
+        return (value || "")
+          .toString()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .trim()
+          .toLowerCase();
+      }
+
+      function parseCsv(text) {
+        const rows = [];
+        let row = [];
+        let current = "";
+        let insideQuotes = false;
+        for (let i = 0; i < text.length; i += 1) {
+          const char = text[i];
+          const next = text[i + 1];
+          if (char === '"') {
+            if (insideQuotes && next === '"') {
+              current += '"';
+              i += 1;
+            } else {
+              insideQuotes = !insideQuotes;
+            }
+          } else if (char === "," && !insideQuotes) {
+            row.push(current);
+            current = "";
+          } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+            if (char === "\r" && next === "\n") {
+              i += 1;
+            }
+            row.push(current);
+            if (row.length > 1 || row[0].trim() !== "") {
+              rows.push(row);
+            }
+            row = [];
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+        if (current.length || row.length) {
+          row.push(current);
+          rows.push(row);
+        }
+        return rows;
+      }
+
+      function buildFromAllMeals(rows) {
+        const header = rows[0] || [];
+        const mealIndex = header.findIndex((cell) => normalizeName(cell) === "meal");
+        const categoryIndex = header.findIndex((cell) => normalizeName(cell) === "category");
+        const gradientIndex = header.findIndex((cell) => normalizeName(cell).startsWith("gradient"));
+        if (mealIndex === -1 || categoryIndex === -1) {
+          return;
+        }
+        const nextMeals = { main: [], side: [], soup: [] };
+        rows.slice(1).forEach((row) => {
+          const meal = (row[mealIndex] || "").trim();
+          const category = normalizeName(row[categoryIndex]);
+          if (!meal || !nextMeals[category]) {
+            return;
+          }
+          nextMeals[category].push(meal);
+          if (gradientIndex !== -1) {
+            const gradient = (row[gradientIndex] || "").trim();
+            if (gradient) {
+              gradientMap[normalizeName(meal)] = gradient;
+            }
+          }
+        });
+        if (nextMeals.main.length || nextMeals.side.length || nextMeals.soup.length) {
+          allMeals = nextMeals;
+        }
+      }
+
+      function buildFromMarket(rows) {
+        const header = rows[0] || [];
+        const mealIndex = header.findIndex((cell) => normalizeName(cell) === "meal");
+        const itemIndex = header.findIndex((cell) => normalizeName(cell) === "item");
+        const qtyIndex = header.findIndex((cell) => normalizeName(cell).startsWith("qty"));
+        const unitIndex = header.findIndex((cell) => normalizeName(cell) === "unit");
+        if (mealIndex === -1 || itemIndex === -1 || qtyIndex === -1) {
+          return;
+        }
+        rows.slice(1).forEach((row) => {
+          const meal = normalizeName(row[mealIndex]);
+          const item = (row[itemIndex] || "").trim();
+          const qty = Number((row[qtyIndex] || "").trim());
+          const unit = (row[unitIndex] || "").trim();
+          if (!meal || !item || Number.isNaN(qty)) {
+            return;
+          }
+          if (!marketMap[meal]) {
+            marketMap[meal] = [];
+          }
+          marketMap[meal].push({ item, qty, unit });
+        });
+      }
+
+      function sanitizeCsvText(text) {
+        if (!text) return "";
+        const marker = "Markdown Content:";
+        if (text.includes(marker)) {
+          const parts = text.split(marker);
+          if (parts.length > 1) {
+            return parts.slice(1).join(marker).trim();
+          }
+        }
+        const lines = text.split(/\r?\n/);
+        const headerIndex = lines.findIndex((line) => /"?Meal"?,/i.test(line));
+        if (headerIndex > 0) {
+          return lines.slice(headerIndex).join("\n").trim();
+        }
+        return text.trim();
+      }
+
+      async function fetchCsvWithFallback(url) {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            const text = await response.text();
+            return sanitizeCsvText(text);
+          }
+        } catch (error) {
+        }
+        try {
+          const proxied = corsProxy + url;
+          const response = await fetch(proxied);
+          if (response.ok) {
+            const text = await response.text();
+            return sanitizeCsvText(text);
+          }
+        } catch (error) {
+        }
+        return "";
+      }
+
+      async function loadSheetData() {
+        const baseUrl = "https://docs.google.com/spreadsheets/d/" + sheetId + "/gviz/tq?tqx=out:csv&sheet=";
+        const allMealsText = await fetchCsvWithFallback(baseUrl + "AllMeals");
+        if (allMealsText) {
+          buildFromAllMeals(parseCsv(allMealsText));
+        }
+        const marketText = await fetchCsvWithFallback(baseUrl + "Market");
+        if (marketText) {
+          buildFromMarket(parseCsv(marketText));
+        }
+      }
+
+      function parseGradient(text) {
+        // Split on comma but not inside parentheses
+        const parts = [];
+        let depth = 0, current = "";
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === "(") depth++;
+          else if (text[i] === ")") depth--;
+          else if (text[i] === "," && depth === 0) {
+            parts.push(current.trim());
+            current = "";
+            continue;
+          }
+          current += text[i];
+        }
+        if (current.trim()) parts.push(current.trim());
+
+        return parts.filter(Boolean).map((chunk) => {
+          // Handle fractions like "1/2"
+          const fracMatch = chunk.match(/^([0-9]+)\/([0-9]+)\s*(.*)/);
+          if (fracMatch) {
+            const qty = Number(fracMatch[1]) / Number(fracMatch[2]);
+            const rest = fracMatch[3].trim();
+            const unitMatch = rest.match(/^(g|kg|ml|l|quả|muỗng|cây|củ|tép|chén|miếng|lát|bó|gói)\s*(.*)/i);
+            if (unitMatch) return { qty, unit: unitMatch[1], item: unitMatch[2].trim() || unitMatch[1] };
+            return { qty, unit: "", item: rest };
+          }
+          // Match: number + optional unit + rest
+          const match = chunk.match(/^([0-9]*\.?[0-9]+)\s*(g|kg|ml|l|quả|muỗng|cây|củ|tép|chén|miếng|lát|bó|gói)?\s*(.*)/i);
+          if (!match || !match[1]) {
+            return { item: chunk, qty: 0, unit: "" };
+          }
+          return {
+            qty: Number(match[1]),
+            unit: match[2] || "",
+            item: (match[3] || chunk).trim()
+          };
+        });
+      }
+
+      function formatQty(value, unit) {
+        const u = unit.toLowerCase();
+        if (u === "g") {
+          if (value >= 1000) return (value / 1000).toFixed(1) + " kg";
+          return Math.round(value) + "g";
+        }
+        if (u === "kg") return value.toFixed(1) + " kg";
+        if (u === "ml") {
+          if (value >= 1000) return (value / 1000).toFixed(1) + " L";
+          return Math.round(value) + "ml";
+        }
+        if (u === "l") return value.toFixed(1) + " L";
+        if (unit) {
+          const v = value % 1 ? value.toFixed(1) : Math.round(value);
+          return v + " " + unit;
+        }
+        return value % 1 ? value.toFixed(1) : Math.round(value).toString();
+      }
+
+      function buildDishHtml(dishName, category, gradient, count) {
+        const tagClass = category === "main" ? "dish-tag-main"
+                       : category === "soup" ? "dish-tag-soup" : "dish-tag-side";
+        const tagLabel = category === "main" ? "Mon chinh"
+                       : category === "soup" ? "Canh" : "Mon phu";
+
+        let html = "<div class='dish-section'>";
+        html += "<div class='dish-section-header'>";
+        html += "<span class='dish-tag " + tagClass + "'>" + tagLabel + "</span>";
+        html += "<span class='dish-section-name'>" + dishName + "</span>";
+        html += "</div>";
+
+        if (!gradient) {
+          html += "<div class='ingredient-seasoning'>Chua co nguyen lieu</div>";
+          html += "</div>";
+          return html;
+        }
+
+        const items = parseGradient(gradient);
+        const withQty = items.filter((i) => i.qty > 0);
+        const noQty = items.filter((i) => i.qty === 0);
+
+        html += "<ul class='ingredient-list'>";
+        withQty.forEach((row) => {
+          html += "<li class='ingredient-item'>";
+          html += "<span class='ingredient-name'>" + row.item + "</span>";
+          html += "<span class='ingredient-qty'>" + formatQty(row.qty * count, row.unit) + "</span>";
+          html += "</li>";
+        });
+        html += "</ul>";
+
+        if (noQty.length) {
+          html += "<div class='ingredient-seasoning'>" + noQty.map((r) => r.item).join(", ") + "</div>";
+        }
+
+        html += "</div>";
+        return html;
+      }
+
+      function updateMarket(count, meals) {
+        const categories = ["main", "side", "soup"];
+        const mealEls = [mealMain, mealSide, mealSoup];
+        let html = "";
+        let hasAny = false;
+
+        mealEls.forEach((el, idx) => {
+          const name = (el.textContent || "").trim();
+          if (!name || name.startsWith("No ")) return;
+          const key = normalizeName(name);
+          const gradient = gradientMap[key] || "";
+          if (gradient) hasAny = true;
+          html += buildDishHtml(name, categories[idx], gradient, count);
+        });
+
+        if (html) {
+          marketList.innerHTML = html;
+        } else {
+          marketList.innerHTML = "<div class='market-note'>Khong tim thay nguyen lieu. Them du lieu vao cot Gradient/1person trong AllMeals.</div>";
+        }
+      }
+
+      function pickRandom(arr) {
+        if (!arr || !arr.length) return "";
+        return arr[Math.floor(Math.random() * arr.length)];
+      }
+
+      function reroll() {
+        const main = pickRandom(allMeals.main);
+        const isSpecial = specialMains.has(main.toLowerCase());
+        const side = isSpecial ? "" : pickRandom(allMeals.side);
+        const soup = isSpecial ? "" : pickRandom(allMeals.soup);
+        mealMain.textContent = main;
+        mealSide.textContent = side || "No side (special main)";
+        mealSoup.textContent = soup || "No soup (special main)";
+        specialNote.textContent = isSpecial ? "Special main only" : "";
+        updateMarket(Number(select.value), [main, side, soup].filter(Boolean));
+      }
+
+      select.addEventListener("change", (event) => {
+        countLabel.textContent = event.target.value + " people";
+        updateMarket(Number(event.target.value), [mealMain.textContent, mealSide.textContent, mealSoup.textContent]);
+      });
+
+      rerollBtn.addEventListener("click", reroll);
+
+      loadSheetData().then(() => {
+        updateMarket(Number(select.value), [mealMain.textContent, mealSide.textContent, mealSoup.textContent]);
+      });
+    </script>
+  </body>
+</html>

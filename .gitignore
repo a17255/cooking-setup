@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+credentials.json
+combined_ca.pem
+config.json
+token*.json
