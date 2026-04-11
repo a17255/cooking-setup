@@ -617,7 +617,15 @@
         updateMarket(Number(select.value), [main, side, soup].filter(Boolean));
       }
 
+      // Restore saved people count
+      const saved = localStorage.getItem("cookingPeople");
+      if (saved) {
+        select.value = saved;
+        countLabel.textContent = saved + " people";
+      }
+
       select.addEventListener("change", (event) => {
+        localStorage.setItem("cookingPeople", event.target.value);
         countLabel.textContent = event.target.value + " people";
         updateMarket(Number(event.target.value), [mealMain.textContent, mealSide.textContent, mealSoup.textContent]);
       });
