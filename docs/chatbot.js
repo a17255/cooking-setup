@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'cooking_gemini_key';
+  const STORAGE_KEY = 'cooking_llm_key';
   const ADDED_KEY   = 'cooking_added_dishes';
-  const GEMINI_URL  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+  const GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions';
 
   // ── Inject HTML ───────────────────────────────────────────────────
   function injectUI() {
@@ -19,11 +19,11 @@
         </div>
         <div id="cb-messages"></div>
         <div id="cb-setup">
-          <p>Nhập <strong>Gemini API key</strong> của bạn để bắt đầu:</p>
-          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">
-            Lấy key miễn phí tại Google AI Studio →
+          <p>Nhập <strong>Groq API key</strong> của bạn để bắt đầu:</p>
+          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">
+            Lấy key miễn phí tại Groq Console →
           </a>
-          <input id="cb-key-input" type="password" placeholder="AIzaSy..." autocomplete="off" />
+          <input id="cb-key-input" type="password" placeholder="gsk_..." autocomplete="off" />
           <button onclick="window._cbSaveKey()">Lưu key</button>
         </div>
         <div id="cb-input-row">
@@ -209,30 +209,37 @@ Rules:
 - Keep responses concise (1–3 sentences max)`;
   }
 
-  // ── Gemini API ────────────────────────────────────────────────────
+  // ── Groq API ──────────────────────────────────────────────────────
   async function callGemini(userMsg) {
     const key = localStorage.getItem(STORAGE_KEY);
     if (!key) throw new Error('No API key');
-    const res = await fetch(GEMINI_URL + '?key=' + encodeURIComponent(key), {
+    const res = await fetch(GROQ_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + key
+      },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: buildSystemPrompt() }] },
-        contents: [{ role: 'user', parts: [{ text: userMsg }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: buildSystemPrompt() },
+          { role: 'user',   content: userMsg }
+        ],
+        temperature: 0.7,
+        max_tokens: 512,
+        response_format: { type: 'json_object' }
       })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      const e   = new Error('Gemini API error');
+      const e   = new Error('Groq API error');
       e.status  = res.status;
       e.detail  = err;
       throw e;
     }
     const json = await res.json();
-    const raw  = (json.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
-    const clean = raw.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/,'').trim();
-    return JSON.parse(clean);
+    const raw  = (json.choices?.[0]?.message?.content || '').trim();
+    return JSON.parse(raw);
   }
 
   // ── Action handlers ───────────────────────────────────────────────
