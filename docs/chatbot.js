@@ -207,7 +207,7 @@ Always respond with valid JSON only — no markdown fences, no explanation outsi
 
 Rules:
 - Reply in the SAME language the user writes in (Vietnamese → Vietnamese, English → English)
-- For reroll actions, include a friendly response text confirming the change
+- For reroll actions: if user names a specific dish or ingredient (e.g. "sườn", "cá hồi"), find the best matching dish from the available list and put its exact name in data.name. For a general/random reroll, set data to null. Always include a friendly response text.
 - For add_dish: data.category must be "main", "side", or "soup"; data.name must be the full dish name to add. If user gives a vague name like "sườn", pick the most common Vietnamese dish with that ingredient (e.g. "Sườn xào chua ngọt") and confirm your choice. Always execute add_dish when user asks to add/thêm a dish.
 - For all other actions, data may be null or omitted
 - Keep responses concise (1–3 sentences max)`;
@@ -249,9 +249,9 @@ Rules:
   // ── Action handlers ───────────────────────────────────────────────
   function executeAction(action, data) {
     switch (action) {
-      case 'reroll_main': rerollCat('main'); break;
-      case 'reroll_side': rerollCat('side'); break;
-      case 'reroll_soup': rerollCat('soup'); break;
+      case 'reroll_main': rerollCat('main', data?.name); break;
+      case 'reroll_side': rerollCat('side', data?.name); break;
+      case 'reroll_soup': rerollCat('soup', data?.name); break;
       case 'reroll_all':
         if (typeof window.reroll === 'function') window.reroll();
         break;
@@ -264,17 +264,27 @@ Rules:
     }
   }
 
-  function rerollCat(cat) {
+  function rerollCat(cat, targetName) {
     const meals = getMeals();
     const pool  = [...(meals[cat] || []), ...(getAdded()[cat] || [])];
     if (!pool.length) return;
     const el  = document.getElementById('meal-' + cat);
     if (!el) return;
-    const cur = el.textContent;
-    const avail = pool.filter(m => m !== cur);
-    el.textContent = avail.length
-      ? avail[Math.floor(Math.random() * avail.length)]
-      : pool[Math.floor(Math.random() * pool.length)];
+    let picked = null;
+    if (targetName) {
+      const t = targetName.toLowerCase();
+      picked = pool.find(m => m.toLowerCase() === t)
+            || pool.find(m => m.toLowerCase().includes(t))
+            || pool.find(m => t.includes(m.toLowerCase()));
+    }
+    if (!picked) {
+      const cur   = el.textContent;
+      const avail = pool.filter(m => m !== cur);
+      picked = avail.length
+        ? avail[Math.floor(Math.random() * avail.length)]
+        : pool[Math.floor(Math.random() * pool.length)];
+    }
+    el.textContent = picked;
     if (typeof window.updateMarket === 'function') {
       const people = Number(document.getElementById('people-select')?.value || 1);
       const mealNames = ['meal-main','meal-side','meal-soup']
