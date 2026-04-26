@@ -4,3 +4,4 @@ credentials.json
 combined_ca.pem
 config.json
 token*.json
+.superpowers/
