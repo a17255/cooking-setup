@@ -3,7 +3,7 @@
 
   const STORAGE_KEY = 'cooking_gemini_key';
   const ADDED_KEY   = 'cooking_added_dishes';
-  const GEMINI_URL  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+  const GEMINI_URL  = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
   // ── Inject HTML ───────────────────────────────────────────────────
   function injectUI() {
