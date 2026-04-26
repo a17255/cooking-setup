@@ -471,7 +471,7 @@ def build_html(
 
       rerollBtn.addEventListener("click", reroll);
     </script>
-    <script src="chatbot.js" defer></script>
+    <script src="meal-assistant.js" defer></script>
   </body>
 </html>
 """

@@ -198,18 +198,25 @@ Available meals:
 - Side dishes (${side.length}): ${side.join(', ')}
 - Soups (${soup.length}): ${soup.join(', ')}
 
-Always respond with valid JSON only — no markdown fences, no explanation outside the JSON:
-{
-  "action": "chat" | "reroll_main" | "reroll_side" | "reroll_soup" | "reroll_all" | "add_dish",
-  "response": "your reply to the user",
-  "data": { "category": "main|side|soup", "name": "dish name" }
-}
+Always respond with valid JSON only — no markdown fences, no explanation outside the JSON.
+
+For random reroll (user says "đổi", "change" without naming a dish):
+{"action":"reroll_main","response":"Đã đổi món chính cho bạn!","data":null}
+
+For targeted reroll (user names a specific dish/ingredient like "sườn", "cá hồi"):
+{"action":"reroll_main","response":"Đổi sang sườn non kho trứng cút nhé!","data":{"name":"sườn non kho trứng cút"}}
+
+For add_dish:
+{"action":"add_dish","response":"Đã thêm bún bò Huế vào món chính!","data":{"category":"main","name":"Bún bò Huế"}}
+
+For chat/search/explain:
+{"action":"chat","response":"...","data":null}
 
 Rules:
 - Reply in the SAME language the user writes in (Vietnamese → Vietnamese, English → English)
-- For reroll actions: if user names a specific dish or ingredient (e.g. "sườn", "cá hồi"), find the best matching dish from the available list and put its exact name in data.name. For a general/random reroll, set data to null. Always include a friendly response text.
-- For add_dish: data.category must be "main", "side", or "soup"; data.name must be the full dish name to add. If user gives a vague name like "sườn", pick the most common Vietnamese dish with that ingredient (e.g. "Sườn xào chua ngọt") and confirm your choice. Always execute add_dish when user asks to add/thêm a dish.
-- For all other actions, data may be null or omitted
+- For reroll with a specific target: data.name = exact dish name from the available list that best matches what user asked. NEVER put a category word ("canh", "súp", "main") in data.name.
+- For random reroll (no specific dish requested): data = null
+- For add_dish: data.category must be "main", "side", or "soup"; data.name = full dish name. If vague, infer the most common dish.
 - Keep responses concise (1–3 sentences max)`;
   }
 
