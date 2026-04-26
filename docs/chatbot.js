@@ -103,6 +103,10 @@
         border-radius:8px; padding:8px 13px; font-size:16px; cursor:pointer; flex-shrink:0;
       }
       #cb-send:disabled { opacity:.45; cursor:not-allowed; }
+      @media (max-width: 520px) {
+        #cb-panel { width:calc(100vw - 16px); right:8px; bottom:76px; }
+        #cb-bubble { bottom:16px; right:16px; }
+      }
     `;
     document.head.appendChild(s);
   }
@@ -300,7 +304,7 @@ Rules:
     try {
       const result = await callGemini(text);
       typing.remove();
-      addMsg('bot', result.response || '...');
+      if (result.action !== 'add_dish') addMsg('bot', result.response || '...');
       if (result.action && result.action !== 'chat') {
         executeAction(result.action, result.data || null);
       }
