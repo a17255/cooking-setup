@@ -44,7 +44,7 @@
         position:fixed; bottom:24px; right:24px; width:52px; height:52px;
         background:linear-gradient(135deg,#e8c97e,#c8a84b); border-radius:50%;
         display:flex; align-items:center; justify-content:center; font-size:24px;
-        box-shadow:0 3px 14px rgba(0,0,0,.4); cursor:pointer; z-index:9999;
+        box-shadow:0 3px 14px rgba(0,0,0,.4); cursor:pointer; z-index:99999;
         user-select:none; transition:transform .15s;
       }
       #cb-bubble:hover { transform:scale(1.08); }
@@ -52,7 +52,7 @@
         position:fixed; bottom:88px; right:24px; width:340px; height:480px;
         background:#1e1e30; border-radius:16px; border:1.5px solid #e8c97e44;
         box-shadow:0 8px 32px rgba(0,0,0,.5); display:none; flex-direction:column;
-        z-index:9998; overflow:hidden; font-family:inherit; font-size:14px;
+        z-index:99998; overflow:hidden; font-family:inherit; font-size:14px;
       }
       #cb-panel.open { display:flex; }
       #cb-header {
@@ -275,6 +275,13 @@ Rules:
     el.textContent = avail.length
       ? avail[Math.floor(Math.random() * avail.length)]
       : pool[Math.floor(Math.random() * pool.length)];
+    if (typeof window.updateMarket === 'function') {
+      const people = Number(document.getElementById('people-select')?.value || 1);
+      const mealNames = ['meal-main','meal-side','meal-soup']
+        .map(id => (document.getElementById(id)?.textContent || ''))
+        .filter(t => t && !t.startsWith('No '));
+      window.updateMarket(people, mealNames);
+    }
   }
 
   function addDish(category, name) {
