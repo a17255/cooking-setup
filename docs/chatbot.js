@@ -170,7 +170,11 @@
   }
 
   function getAdded() {
-    return JSON.parse(localStorage.getItem(ADDED_KEY) || '{"main":[],"side":[],"soup":[]}');
+    try {
+      return JSON.parse(localStorage.getItem(ADDED_KEY) || '{"main":[],"side":[],"soup":[]}');
+    } catch {
+      return { main: [], side: [], soup: [] };
+    }
   }
 
   function buildSystemPrompt() {
@@ -208,6 +212,7 @@ Rules:
   // ── Gemini API ────────────────────────────────────────────────────
   async function callGemini(userMsg) {
     const key = localStorage.getItem(STORAGE_KEY);
+    if (!key) throw new Error('No API key');
     const res = await fetch(GEMINI_URL + '?key=' + encodeURIComponent(key), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -297,7 +302,7 @@ Rules:
         addMsg('err', 'API key không hợp lệ. Nhấn ⚙ để cập nhật.');
       } else if (err instanceof SyntaxError) {
         addMsg('err', 'Chatbot trả về định dạng lạ. Thử gửi lại nhé!');
-      } else if (!navigator.onLine) {
+      } else if (err instanceof TypeError || !navigator.onLine) {
         addMsg('err', 'Không có kết nối internet. Kiểm tra lại nhé!');
       } else {
         addMsg('err', 'Chatbot tạm thời không khả dụng 😅 Thử lại sau nhé.');
