@@ -204,7 +204,7 @@ Always respond with valid JSON only — no markdown fences, no explanation outsi
 Rules:
 - Reply in the SAME language the user writes in (Vietnamese → Vietnamese, English → English)
 - For reroll actions, include a friendly response text confirming the change
-- For add_dish, data must have category ("main", "side", or "soup") and name; confirm what you added
+- For add_dish: data.category must be "main", "side", or "soup"; data.name must be the full dish name to add. If user gives a vague name like "sườn", pick the most common Vietnamese dish with that ingredient (e.g. "Sườn xào chua ngọt") and confirm your choice. Always execute add_dish when user asks to add/thêm a dish.
 - For all other actions, data may be null or omitted
 - Keep responses concise (1–3 sentences max)`;
   }
@@ -252,7 +252,10 @@ Rules:
         if (typeof window.reroll === 'function') window.reroll();
         break;
       case 'add_dish':
-        if (data && data.category && data.name) addDish(data.category, data.name);
+        if (data && data.category && data.name) {
+          addDish(data.category, data.name);
+          addMsg('bot', '✅ Đã thêm "' + data.name + '" vào ' + (data.category === 'main' ? 'món chính' : data.category === 'side' ? 'món phụ' : 'canh') + '.');
+        }
         break;
     }
   }
