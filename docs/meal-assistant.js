@@ -4,6 +4,14 @@
   const STORAGE_KEY = 'cooking_llm_key';
   const ADDED_KEY   = 'cooking_added_dishes';
   const GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions';
+  const HISTORY_MAX = 8;
+
+  // Short-term chat memory (cleared on page reload)
+  const chatHistory = [];
+  function pushHistory(role, text) {
+    chatHistory.push({ role, text });
+    while (chatHistory.length > HISTORY_MAX) chatHistory.shift();
+  }
 
   // ── Inject HTML ───────────────────────────────────────────────────
   function injectUI() {
@@ -278,7 +286,7 @@ Suggest ONE full Vietnamese dish name that fits what the user described. The dis
     const side = merge('side');
     const soup = merge('soup');
     const cur = id => (document.getElementById(id) || {}).textContent || '?';
-    return `You are a Vietnamese family meal assistant.
+    return `You are a Vietnamese family meal assistant. Reply conversationally in ${language} (1-3 sentences).
 
 Today's menu: ${cur('meal-main')} | ${cur('meal-side')} | ${cur('meal-soup')}
 Available meals:
@@ -286,16 +294,33 @@ Available meals:
 - Side dishes (${side.length}): ${side.join(', ')}
 - Soups (${soup.length}): ${soup.join(', ')}
 
-User: "${userMsg}"
+IMPORTANT: Use the conversation history to understand context. If you previously proposed options and the user agrees ("ok", "any is fine", "cái nào cũng được", "bạn chọn đi") — PICK ONE specific dish and include it as an action so the page updates. Do NOT ask the same question twice.
 
-Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as JSON:
-{"response":"..."}`;
+Respond ONLY as JSON:
+{
+  "action": "chat" | "reroll_main" | "reroll_side" | "reroll_soup" | "add_dish",
+  "category": "main|side|soup (only when action=add_dish)",
+  "dish": "<exact dish name from the list (required when action is reroll_* or add_dish)>",
+  "response": "<your reply to user>"
+}
+
+Use action="chat" for questions/explanations. Use reroll_* only when the user has agreed to a prior proposal or clearly wants a change.`;
   }
 
   // ── Groq API ──────────────────────────────────────────────────────
-  async function callLLM(systemPrompt, userMsg) {
+  async function callLLM(systemPrompt, userMsg, includeHistory) {
     const key = localStorage.getItem(STORAGE_KEY);
     if (!key) throw new Error('No API key');
+    const messages = [{ role: 'system', content: systemPrompt }];
+    if (includeHistory) {
+      for (const h of chatHistory) {
+        messages.push({
+          role: h.role === 'user' ? 'user' : 'assistant',
+          content: h.text
+        });
+      }
+    }
+    messages.push({ role: 'user', content: userMsg });
     const res = await fetch(GROQ_URL, {
       method: 'POST',
       headers: {
@@ -304,10 +329,7 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userMsg }
-        ],
+        messages: messages,
         temperature: 0.7,
         max_tokens: 512,
         response_format: { type: 'json_object' }
@@ -375,10 +397,13 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
 
     input.value = '';
     addMsg('user', text);
+    pushHistory('user', text);
 
     const btn    = document.getElementById('cb-send');
     btn.disabled = true;
     const typing = addTyping();
+
+    let botReply = '';
 
     try {
       const intent   = detectIntent(text);
@@ -390,10 +415,9 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
           text
         );
         typing.remove();
-        if (result.dish) {
-          rerollCat(intent.category, result.dish);
-        }
-        addMsg('bot', result.response || '...');
+        if (result.dish) rerollCat(intent.category, result.dish);
+        botReply = result.response || '...';
+        addMsg('bot', botReply);
 
       } else if (intent.action === 'add_dish' && intent.category) {
         const result = await callLLM(
@@ -401,22 +425,31 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
           text
         );
         typing.remove();
-        if (result.dish) {
-          addDish(intent.category, result.dish);
-        }
-        addMsg('bot', result.response || (result.dish ? '✅ ' + result.dish : '...'));
+        if (result.dish) addDish(intent.category, result.dish);
+        botReply = result.response || (result.dish ? '✅ ' + result.dish : '...');
+        addMsg('bot', botReply);
 
       } else if (intent.action === 'reroll_all') {
         typing.remove();
         if (typeof window.reroll === 'function') window.reroll();
-        addMsg('bot', language === 'Vietnamese'
+        botReply = language === 'Vietnamese'
           ? 'Đã đổi toàn bộ thực đơn cho bạn! 🍽️'
-          : 'Full menu rerolled! 🍽️');
+          : 'Full menu rerolled! 🍽️';
+        addMsg('bot', botReply);
 
       } else {
-        const result = await callLLM(buildChatPrompt(text, language), text);
+        // Chat: pass history so Groq can respond to context-dependent messages
+        // ("any is fine" after a proposal) and optionally trigger a reroll/add.
+        const result = await callLLM(buildChatPrompt(text, language), text, true);
         typing.remove();
-        addMsg('bot', result.response || '...');
+        if (result.action && result.dish) {
+          if (result.action === 'reroll_main') rerollCat('main', result.dish);
+          else if (result.action === 'reroll_side') rerollCat('side', result.dish);
+          else if (result.action === 'reroll_soup') rerollCat('soup', result.dish);
+          else if (result.action === 'add_dish' && result.category) addDish(result.category, result.dish);
+        }
+        botReply = result.response || '...';
+        addMsg('bot', botReply);
       }
 
     } catch (err) {
@@ -433,6 +466,7 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
         addMsg('err', 'Chatbot tạm thời không khả dụng 😅 Thử lại sau nhé.');
       }
     } finally {
+      if (botReply) pushHistory('bot', botReply);
       btn.disabled = false;
       input.focus();
     }
