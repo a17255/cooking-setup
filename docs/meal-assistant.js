@@ -294,17 +294,22 @@ Available meals:
 - Side dishes (${side.length}): ${side.join(', ')}
 - Soups (${soup.length}): ${soup.join(', ')}
 
-IMPORTANT: Use the conversation history to understand context. If you previously proposed options and the user agrees ("ok", "any is fine", "cái nào cũng được", "bạn chọn đi") — PICK ONE specific dish and include it as an action so the page updates. Do NOT ask the same question twice.
+CRITICAL CONTEXT RULE: If the user's latest message is a brief agreement or deferral to your previous turn — "ok", "được", "cái nào cũng được", "bạn chọn đi", "any is fine", "you pick", "sure", "yes" — and your previous turn proposed dishes, then you MUST set action to "reroll_<category>" with an exact dish name in the "dish" field. Do NOT just say "I chose X" without setting action + dish — the page will not update and the user will think you are broken.
+
+Examples:
+User: "muốn ăn sườn hôm nay"
+You: {"action":"chat","dish":null,"response":"Có 3 món sườn: Sườn xào, Sườn kho trứng, Sườn nướng. Bạn muốn món nào?"}
+
+User: "cái nào cũng được"
+You: {"action":"reroll_main","dish":"Sườn kho trứng","response":"Tớ chọn Sườn kho trứng cho bạn nhé!"}
 
 Respond ONLY as JSON:
 {
   "action": "chat" | "reroll_main" | "reroll_side" | "reroll_soup" | "add_dish",
   "category": "main|side|soup (only when action=add_dish)",
-  "dish": "<exact dish name from the list (required when action is reroll_* or add_dish)>",
+  "dish": "<exact dish name, copied from the Available meals list above>",
   "response": "<your reply to user>"
-}
-
-Use action="chat" for questions/explanations. Use reroll_* only when the user has agreed to a prior proposal or clearly wants a change.`;
+}`;
   }
 
   // ── Groq API ──────────────────────────────────────────────────────
@@ -442,6 +447,7 @@ Use action="chat" for questions/explanations. Use reroll_* only when the user ha
         // ("any is fine" after a proposal) and optionally trigger a reroll/add.
         const result = await callLLM(buildChatPrompt(text, language), text, true);
         typing.remove();
+        console.log('[chatbot] chat-path LLM result:', result);
         if (result.action && result.dish) {
           if (result.action === 'reroll_main') rerollCat('main', result.dish);
           else if (result.action === 'reroll_side') rerollCat('side', result.dish);
