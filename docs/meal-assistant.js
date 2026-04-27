@@ -172,24 +172,34 @@
   }
 
   function extractTarget(msg) {
-    const stopwords = [
+    const stopwords = new Set([
       'đổi','doi','change','reroll','sang','thành','thanh','to',
       'canh','súp','sup','soup','món','mon','chính','chinh','main',
       'phụ','phu','rau','side','thêm','them','add','vào','vao',
       'khác','khac','other','different'
-    ];
-    const pattern = new RegExp('\\b(' + stopwords.join('|') + ')\\b', 'gi');
-    const cleaned = msg.replace(pattern, '').trim().replace(/\s+/g, ' ');
+    ]);
+    const cleaned = msg
+      .split(/[\s.,!?:;]+/)
+      .filter(w => w && !stopwords.has(w.toLowerCase()))
+      .join(' ')
+      .trim();
     return cleaned || null;
   }
 
   function detectIntent(msg) {
-    const hasSoup = /\b(canh|súp|sup|soup)\b/i.test(msg);
-    const hasMain = /(món chính|mon chinh|\bmain\b)/i.test(msg);
-    const hasSide = /(món phụ|mon phu|món rau|mon rau|\bside\b|\brau\b)/i.test(msg);
-    const isAdd      = /\b(thêm|them|add)\b/i.test(msg);
-    const isReroll   = /\b(đổi|doi|change|reroll|khác|khac|other|different)\b/i.test(msg);
-    const isQuestion = /\?|bao nhiêu|bao nhieu|how many|how much|what is|là gì|la gi/i.test(msg);
+    const lower = msg.toLowerCase();
+    const hasMonChinh = /món chính|mon chinh/i.test(lower);
+    const hasMonPhu   = /món phụ|mon phu|món rau|mon rau/i.test(lower);
+
+    const words = lower.split(/[\s.,!?:;]+/).filter(Boolean);
+    const hasWord = (...list) => list.some(w => words.includes(w));
+
+    const hasSoup    = hasWord('canh','súp','sup','soup');
+    const hasMain    = hasMonChinh || hasWord('main');
+    const hasSide    = hasMonPhu   || hasWord('side','rau');
+    const isAdd      = hasWord('thêm','them','add');
+    const isReroll   = hasWord('đổi','doi','change','reroll','khác','khac','other','different');
+    const isQuestion = /\?|bao nhiêu|bao nhieu|how many|how much|what is|là gì|la gi/i.test(lower);
 
     let category = null;
     if (hasSoup) category = 'soup';
