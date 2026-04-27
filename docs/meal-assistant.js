@@ -404,7 +404,7 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
         if (result.dish) {
           addDish(intent.category, result.dish);
         }
-        addMsg('bot', result.response || ('✅ ' + (result.dish || '')));
+        addMsg('bot', result.response || (result.dish ? '✅ ' + result.dish : '...'));
 
       } else if (intent.action === 'reroll_all') {
         typing.remove();
