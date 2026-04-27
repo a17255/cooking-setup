@@ -1,9 +1,8 @@
 (function () {
   'use strict';
 
-  const STORAGE_KEY = 'cooking_llm_key';
-  const ADDED_KEY   = 'cooking_added_dishes';
-  const GROQ_URL    = 'https://api.groq.com/openai/v1/chat/completions';
+  const ADDED_KEY = 'cooking_added_dishes';
+  const LLM_URL   = 'https://cooking-proxy.hovanphapbk.workers.dev';
   const HISTORY_MAX = 8;
 
   // Short-term chat memory (cleared on page reload)
@@ -20,20 +19,9 @@
       <div id="cb-panel">
         <div id="cb-header">
           <span>🍳 Trợ lý nấu ăn</span>
-          <div>
-            <span id="cb-gear" onclick="window._cbSettings()" title="Cài đặt API key">⚙</span>
-            <span onclick="window._cbToggle()" title="Đóng">✕</span>
-          </div>
+          <span onclick="window._cbToggle()" title="Đóng" style="cursor:pointer;opacity:.65">✕</span>
         </div>
         <div id="cb-messages"></div>
-        <div id="cb-setup">
-          <p>Nhập <strong>Groq API key</strong> của bạn để bắt đầu:</p>
-          <a href="https://console.groq.com/keys" target="_blank" rel="noopener">
-            Lấy key miễn phí tại Groq Console →
-          </a>
-          <input id="cb-key-input" type="password" placeholder="gsk_..." autocomplete="off" />
-          <button onclick="window._cbSaveKey()">Lưu key</button>
-        </div>
         <div id="cb-input-row">
           <input id="cb-input" type="text" placeholder="Hỏi gì đó..." autocomplete="off" />
           <button id="cb-send" onclick="window._cbSend()">➤</button>
@@ -124,38 +112,7 @@
     const panel = document.getElementById('cb-panel');
     const opening = panel.classList.toggle('open');
     if (opening && document.getElementById('cb-messages').children.length === 0) {
-      const key = localStorage.getItem(STORAGE_KEY);
-      if (!key) {
-        showSetup();
-      } else {
-        hideSetup();
-        addMsg('bot', 'Xin chào! 👋 Tôi có thể giúp bạn:\n• Tìm món theo từ khoá ("sưởn", "thịt bò")\n• Đếm số món ("có bao nhiêu món chính?")\n• Gợi ý món ăn ("gợi ý món nhẹ tối nay")\n• Đổi thực đơn ("đổi món chính khác đi")\n• Giải thích món ("bánh canh là gì?")\n• Thêm món mới ("thêm bún bò Huế vào món chính")\n• Lên thực đơn tuần\n• Hỏi hôm nay ăn gì?');
-      }
-    }
-  };
-
-  // ── Setup screen ──────────────────────────────────────────────────
-  window._cbSettings = function () { showSetup(); };
-
-  function showSetup() {
-    document.getElementById('cb-setup').style.display = 'flex';
-    document.getElementById('cb-input-row').style.display = 'none';
-    const existing = localStorage.getItem(STORAGE_KEY);
-    if (existing) document.getElementById('cb-key-input').value = existing;
-  }
-
-  function hideSetup() {
-    document.getElementById('cb-setup').style.display = 'none';
-    document.getElementById('cb-input-row').style.display = 'flex';
-  }
-
-  window._cbSaveKey = function () {
-    const key = document.getElementById('cb-key-input').value.trim();
-    if (!key) return;
-    localStorage.setItem(STORAGE_KEY, key);
-    hideSetup();
-    if (document.getElementById('cb-messages').children.length === 0) {
-      addMsg('bot', 'Key đã lưu! ✅ Bạn muốn hỏi gì về thực đơn?');
+      addMsg('bot', 'Xin chào! 👋 Tôi có thể giúp bạn:\n• Tìm món theo từ khoá ("sưởn", "thịt bò")\n• Đếm số món ("có bao nhiêu món chính?")\n• Gợi ý món ăn ("gợi ý món nhẹ tối nay")\n• Đổi thực đơn ("đổi món chính khác đi")\n• Giải thích món ("bánh canh là gì?")\n• Thêm món mới ("thêm bún bò Huế vào món chính")\n• Lên thực đơn tuần\n• Hỏi hôm nay ăn gì?');
     }
   };
 
@@ -333,10 +290,8 @@ Respond ONLY as JSON:
 }`;
   }
 
-  // ── Groq API ──────────────────────────────────────────────────────
+  // ── LLM call (via Cloudflare Worker proxy — no API key needed) ────
   async function callLLM(systemPrompt, userMsg, includeHistory) {
-    const key = localStorage.getItem(STORAGE_KEY);
-    if (!key) throw new Error('No API key');
     const messages = [{ role: 'system', content: systemPrompt }];
     if (includeHistory) {
       for (const h of chatHistory) {
@@ -347,11 +302,10 @@ Respond ONLY as JSON:
       }
     }
     messages.push({ role: 'user', content: userMsg });
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(LLM_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + key
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
@@ -419,8 +373,6 @@ Respond ONLY as JSON:
     const text  = (input.value || '').trim();
     if (!text) return;
 
-    if (!localStorage.getItem(STORAGE_KEY)) { showSetup(); return; }
-
     input.value = '';
     addMsg('user', text);
     pushHistory('user', text);
@@ -482,9 +434,9 @@ Respond ONLY as JSON:
     } catch (err) {
       typing.remove();
       if (err.status === 429) {
-        addMsg('err', 'Đã dùng hết quota hôm nay. Thử lại ngày mai nhé. 😅');
-      } else if (err.status === 400 || err.status === 403) {
-        addMsg('err', 'API key không hợp lệ. Nhấn ⚙ để cập nhật.');
+        addMsg('err', 'Có quá nhiều người đang dùng chatbot. Thử lại sau ít phút nhé. ⏳');
+      } else if (err.status === 403) {
+        addMsg('err', 'Yêu cầu bị từ chối. Có thể site đang bị chặn truy cập chatbot.');
       } else if (err instanceof SyntaxError) {
         addMsg('err', 'Chatbot trả về định dạng lạ. Thử gửi lại nhé!');
       } else if (err instanceof TypeError || !navigator.onLine) {
