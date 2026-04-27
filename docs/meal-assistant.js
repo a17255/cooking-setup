@@ -286,13 +286,34 @@ Suggest ONE full Vietnamese dish name that fits what the user described. The dis
     const side = merge('side');
     const soup = merge('soup');
     const cur = id => (document.getElementById(id) || {}).textContent || '?';
+
+    // Pull real per-person ingredient data from the page so the bot does not invent numbers.
+    const gMap = (typeof gradientMap !== 'undefined') ? gradientMap : {};
+    const norm = (typeof normalizeName === 'function')
+      ? normalizeName
+      : (s => (s || '').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase());
+    const gradFor = name => gMap[norm(name)] || '(no ingredient data)';
+    const curMain = cur('meal-main');
+    const curSide = cur('meal-side');
+    const curSoup = cur('meal-soup');
+    const peopleSel = document.getElementById('people-select');
+    const people = peopleSel ? Number(peopleSel.value) || 1 : 1;
+
     return `You are a Vietnamese family meal assistant. Reply conversationally in ${language} (1-3 sentences).
 
-Today's menu: ${cur('meal-main')} | ${cur('meal-side')} | ${cur('meal-soup')}
+Today's menu (for ${people} people): ${curMain} | ${curSide} | ${curSoup}
+
+Ingredients per 1 person for the CURRENT menu (multiply by ${people} for total):
+- ${curMain}: ${gradFor(curMain)}
+- ${curSide}: ${gradFor(curSide)}
+- ${curSoup}: ${gradFor(curSoup)}
+
 Available meals:
 - Main dishes (${main.length}): ${main.join(', ')}
 - Side dishes (${side.length}): ${side.join(', ')}
 - Soups (${soup.length}): ${soup.join(', ')}
+
+CRITICAL: When user asks about ingredient weights/quantities, ONLY use numbers from the "Ingredients per 1 person" section above — multiply by ${people} for total. Never invent weights.
 
 CRITICAL CONTEXT RULE: If the user's latest message is a brief agreement or deferral to your previous turn — "ok", "được", "cái nào cũng được", "bạn chọn đi", "any is fine", "you pick", "sure", "yes" — and your previous turn proposed dishes, then you MUST set action to "reroll_<category>" with an exact dish name in the "dish" field. Do NOT just say "I chose X" without setting action + dish — the page will not update and the user will think you are broken.
 
