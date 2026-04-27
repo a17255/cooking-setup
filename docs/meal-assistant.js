@@ -286,25 +286,27 @@ Rules:
     const catLabel = category === 'soup' ? 'canh/soup'
                    : category === 'main' ? 'main dish/món chính'
                    : 'side dish/món phụ';
+    const currentDish = (document.getElementById('meal-' + category) || {}).textContent || '';
+    const avoidLine = currentDish ? `\nDo NOT pick: ${currentDish}` : '';
     return `You help a Vietnamese family pick dinner dishes.
 
-The user wants a new ${catLabel}.${target ? '\nThey prefer something related to: ' + target : ''}
+The user wants a new ${catLabel}.${target ? `\nThey prefer something related to: ${target}` : ''}${avoidLine}
 
 Available ${category} dishes:
 ${list}
 
-Pick ONE dish name from the list (if target given, pick the best match; otherwise pick one different from current). Respond ONLY as JSON:
+Pick ONE dish name from the list (if target given, pick the best match; otherwise pick any different dish). Respond ONLY as JSON:
 {"dish": "<exact dish name from the list>", "response": "<friendly 1-sentence reply in ${language}>"}`;
   }
 
   function buildAddPrompt(category, target, userMsg, language) {
-    const catLabel = category === 'soup' ? 'soup/canh'
-                   : category === 'main' ? 'main/món chính'
-                   : 'side/món phụ';
-    return `The user wants to add a dish to the ${catLabel} category.
-User's request: "${userMsg}"${target ? '\nThey mentioned: ' + target : ''}
+    const catLabel = category === 'soup' ? 'canh/soup'
+                   : category === 'main' ? 'main dish/món chính'
+                   : 'side dish/món phụ';
+    return `The user wants to add a new ${catLabel} to their meal list.
+User's request: "${userMsg}"${target ? `\nThey mentioned: ${target}` : ''}
 
-Suggest ONE full dish name in Vietnamese. Respond ONLY as JSON:
+Suggest ONE full Vietnamese dish name that fits what the user described. The dish can be new (not required to be in any existing list). Respond ONLY as JSON:
 {"dish": "<full dish name>", "response": "<friendly 1-sentence confirmation in ${language}>"}`;
   }
 
