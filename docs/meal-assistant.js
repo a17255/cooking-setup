@@ -223,7 +223,6 @@
   window._detectLanguage = detectLanguage;
   window._extractTarget = extractTarget;
 
-  // ── System prompt ─────────────────────────────────────────────────
   function getMeals() {
     /* allMeals is a let/const in the main page script.
        Non-module scripts share the global lexical env, so it is
@@ -238,45 +237,6 @@
     } catch {
       return { main: [], side: [], soup: [] };
     }
-  }
-
-  function buildSystemPrompt() {
-    const meals = getMeals();
-    const added = getAdded();
-    const merge = cat => [...(meals[cat] || []), ...(added[cat] || [])];
-    const main  = merge('main');
-    const side  = merge('side');
-    const soup  = merge('soup');
-    const cur = id => (document.getElementById(id) || {}).textContent || '?';
-    return `You are a Vietnamese family meal planning assistant embedded in a cooking website.
-
-Today's menu: ${cur('meal-main')} | ${cur('meal-side')} | ${cur('meal-soup')}
-
-Available meals:
-- Main dishes (${main.length}): ${main.join(', ')}
-- Side dishes (${side.length}): ${side.join(', ')}
-- Soups (${soup.length}): ${soup.join(', ')}
-
-Always respond with valid JSON only — no markdown fences, no explanation outside the JSON.
-
-For random reroll (user says "đổi", "change" without naming a dish):
-{"action":"reroll_main","response":"Đã đổi món chính cho bạn!","data":null}
-
-For targeted reroll (user names a specific dish/ingredient like "sườn", "cá hồi"):
-{"action":"reroll_main","response":"Đổi sang sườn non kho trứng cút nhé!","data":{"name":"sườn non kho trứng cút"}}
-
-For add_dish:
-{"action":"add_dish","response":"Đã thêm bún bò Huế vào món chính!","data":{"category":"main","name":"Bún bò Huế"}}
-
-For chat/search/explain:
-{"action":"chat","response":"...","data":null}
-
-Rules:
-- Reply in the SAME language the user writes in (Vietnamese → Vietnamese, English → English)
-- For reroll with a specific target: data.name = exact dish name from the available list that best matches what user asked. NEVER put a category word ("canh", "súp", "main") in data.name.
-- For random reroll (no specific dish requested): data = null
-- For add_dish: data.category must be "main", "side", or "soup"; data.name = full dish name. If vague, infer the most common dish.
-- Keep responses concise (1–3 sentences max)`;
   }
 
   function buildRerollPrompt(category, target, language) {
@@ -333,7 +293,7 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
   }
 
   // ── Groq API ──────────────────────────────────────────────────────
-  async function callGemini(userMsg) {
+  async function callLLM(systemPrompt, userMsg) {
     const key = localStorage.getItem(STORAGE_KEY);
     if (!key) throw new Error('No API key');
     const res = await fetch(GROQ_URL, {
@@ -345,7 +305,7 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: buildSystemPrompt() },
+          { role: 'system', content: systemPrompt },
           { role: 'user',   content: userMsg }
         ],
         temperature: 0.7,
@@ -366,23 +326,6 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
   }
 
   // ── Action handlers ───────────────────────────────────────────────
-  function executeAction(action, data) {
-    switch (action) {
-      case 'reroll_main': rerollCat('main', data?.name); break;
-      case 'reroll_side': rerollCat('side', data?.name); break;
-      case 'reroll_soup': rerollCat('soup', data?.name); break;
-      case 'reroll_all':
-        if (typeof window.reroll === 'function') window.reroll();
-        break;
-      case 'add_dish':
-        if (data && data.category && data.name) {
-          addDish(data.category, data.name);
-          addMsg('bot', '✅ Đã thêm "' + data.name + '" vào ' + (data.category === 'main' ? 'món chính' : data.category === 'side' ? 'món phụ' : 'canh') + '.');
-        }
-        break;
-    }
-  }
-
   function rerollCat(cat, targetName) {
     const meals = getMeals();
     const pool  = [...(meals[cat] || []), ...(getAdded()[cat] || [])];
@@ -438,12 +381,44 @@ Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as 
     const typing = addTyping();
 
     try {
-      const result = await callGemini(text);
-      typing.remove();
-      if (result.action !== 'add_dish') addMsg('bot', result.response || '...');
-      if (result.action && result.action !== 'chat') {
-        executeAction(result.action, result.data || null);
+      const intent   = detectIntent(text);
+      const language = detectLanguage(text);
+
+      if (intent.action === 'reroll' && intent.category) {
+        const result = await callLLM(
+          buildRerollPrompt(intent.category, intent.target, language),
+          text
+        );
+        typing.remove();
+        if (result.dish) {
+          rerollCat(intent.category, result.dish);
+        }
+        addMsg('bot', result.response || '...');
+
+      } else if (intent.action === 'add_dish' && intent.category) {
+        const result = await callLLM(
+          buildAddPrompt(intent.category, intent.target, text, language),
+          text
+        );
+        typing.remove();
+        if (result.dish) {
+          addDish(intent.category, result.dish);
+        }
+        addMsg('bot', result.response || ('✅ ' + (result.dish || '')));
+
+      } else if (intent.action === 'reroll_all') {
+        typing.remove();
+        if (typeof window.reroll === 'function') window.reroll();
+        addMsg('bot', language === 'Vietnamese'
+          ? 'Đã đổi toàn bộ thực đơn cho bạn! 🍽️'
+          : 'Full menu rerolled! 🍽️');
+
+      } else {
+        const result = await callLLM(buildChatPrompt(text, language), text);
+        typing.remove();
+        addMsg('bot', result.response || '...');
       }
+
     } catch (err) {
       typing.remove();
       if (err.status === 429) {
