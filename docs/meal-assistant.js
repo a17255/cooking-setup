@@ -164,6 +164,55 @@
 
   function addTyping() { return addMsg('bot cb-typing', '...'); }
 
+  // ── Intent router ─────────────────────────────────────────────────
+  function detectLanguage(msg) {
+    const vietDiacritics = /[àáảãạăằắẳẵặâầấẩẫậèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵđ]/i;
+    const vietWords = /\b(có|la|là|khong|không|thêm|them|đổi|doi|canh|súp|sup|món|mon|chính|chinh|phụ|phu|rau|cá|ca|sườn|suon|hôm nay|hom nay|bao nhiêu|bao nhieu|gì|gi|của|cua|cho|đi|di|nhé|nhe)\b/i;
+    return (vietDiacritics.test(msg) || vietWords.test(msg)) ? 'Vietnamese' : 'English';
+  }
+
+  function extractTarget(msg) {
+    const stopwords = [
+      'đổi','doi','change','reroll','sang','thành','thanh','to',
+      'canh','súp','sup','soup','món','mon','chính','chinh','main',
+      'phụ','phu','rau','side','thêm','them','add','vào','vao',
+      'khác','khac','other','different'
+    ];
+    const pattern = new RegExp('\\b(' + stopwords.join('|') + ')\\b', 'gi');
+    const cleaned = msg.replace(pattern, '').trim().replace(/\s+/g, ' ');
+    return cleaned || null;
+  }
+
+  function detectIntent(msg) {
+    const hasSoup = /\b(canh|súp|sup|soup)\b/i.test(msg);
+    const hasMain = /(món chính|mon chinh|\bmain\b)/i.test(msg);
+    const hasSide = /(món phụ|mon phu|món rau|mon rau|\bside\b|\brau\b)/i.test(msg);
+    const isAdd      = /\b(thêm|them|add)\b/i.test(msg);
+    const isReroll   = /\b(đổi|doi|change|reroll|khác|khac|other|different)\b/i.test(msg);
+    const isQuestion = /\?|bao nhiêu|bao nhieu|how many|how much|what is|là gì|la gi/i.test(msg);
+
+    let category = null;
+    if (hasSoup) category = 'soup';
+    else if (hasMain) category = 'main';
+    else if (hasSide) category = 'side';
+
+    if (isQuestion) return { action: 'chat' };
+    if (isAdd && category) {
+      return { action: 'add_dish', category, target: extractTarget(msg) };
+    }
+    if (isReroll && category) {
+      return { action: 'reroll', category, target: extractTarget(msg) };
+    }
+    if (isReroll) {
+      return { action: 'reroll_all' };
+    }
+    return { action: 'chat' };
+  }
+
+  window._detectIntent = detectIntent;
+  window._detectLanguage = detectLanguage;
+  window._extractTarget = extractTarget;
+
   // ── System prompt ─────────────────────────────────────────────────
   function getMeals() {
     /* allMeals is a let/const in the main page script.
