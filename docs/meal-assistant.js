@@ -279,6 +279,57 @@ Rules:
 - Keep responses concise (1–3 sentences max)`;
   }
 
+  function buildRerollPrompt(category, target, language) {
+    const meals = getMeals();
+    const added = getAdded();
+    const list  = [...(meals[category] || []), ...(added[category] || [])].join(', ');
+    const catLabel = category === 'soup' ? 'canh/soup'
+                   : category === 'main' ? 'main dish/món chính'
+                   : 'side dish/món phụ';
+    return `You help a Vietnamese family pick dinner dishes.
+
+The user wants a new ${catLabel}.${target ? '\nThey prefer something related to: ' + target : ''}
+
+Available ${category} dishes:
+${list}
+
+Pick ONE dish name from the list (if target given, pick the best match; otherwise pick one different from current). Respond ONLY as JSON:
+{"dish": "<exact dish name from the list>", "response": "<friendly 1-sentence reply in ${language}>"}`;
+  }
+
+  function buildAddPrompt(category, target, userMsg, language) {
+    const catLabel = category === 'soup' ? 'soup/canh'
+                   : category === 'main' ? 'main/món chính'
+                   : 'side/món phụ';
+    return `The user wants to add a dish to the ${catLabel} category.
+User's request: "${userMsg}"${target ? '\nThey mentioned: ' + target : ''}
+
+Suggest ONE full dish name in Vietnamese. Respond ONLY as JSON:
+{"dish": "<full dish name>", "response": "<friendly 1-sentence confirmation in ${language}>"}`;
+  }
+
+  function buildChatPrompt(userMsg, language) {
+    const meals = getMeals();
+    const added = getAdded();
+    const merge = cat => [...(meals[cat] || []), ...(added[cat] || [])];
+    const main = merge('main');
+    const side = merge('side');
+    const soup = merge('soup');
+    const cur = id => (document.getElementById(id) || {}).textContent || '?';
+    return `You are a Vietnamese family meal assistant.
+
+Today's menu: ${cur('meal-main')} | ${cur('meal-side')} | ${cur('meal-soup')}
+Available meals:
+- Main dishes (${main.length}): ${main.join(', ')}
+- Side dishes (${side.length}): ${side.join(', ')}
+- Soups (${soup.length}): ${soup.join(', ')}
+
+User: "${userMsg}"
+
+Reply conversationally in ${language}. Concise (1-3 sentences). Respond ONLY as JSON:
+{"response":"..."}`;
+  }
+
   // ── Groq API ──────────────────────────────────────────────────────
   async function callGemini(userMsg) {
     const key = localStorage.getItem(STORAGE_KEY);
