@@ -634,7 +634,7 @@
       rerollBtn.addEventListener("click", reroll);
 
       loadSheetData().then(() => {
-        updateMarket(Number(select.value), [mealMain.textContent, mealSide.textContent, mealSoup.textContent]);
+        reroll();
       });
     </script>
     <script src="meal-assistant.js" defer></script>
